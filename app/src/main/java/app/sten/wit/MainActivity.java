@@ -3,6 +3,7 @@ package app.sten.wit;
 import java.util.Date;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int MY_PERMISSIONS_REQUEST_READ_CALL_LOG = 0;
     public static final int MY_PERMISSIONS_REQUEST_READ_PHONE_STATE = 1;
     public static final int MY_PERMISSIONS_REQUEST_PROCESS_OUTGOING_CALLS = 2;
+    public static NotificationCreator notification;
 
     CallReceiver callReceiver;
     WebView webView;
@@ -100,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
 
         APIAgent agent = new APIAgent();
         agent.auth_request();
+
+//        При создании приложения инициализируется класс уведомлений и в него передается текущий системный сервис.
+//        Далее в проекте его можно вызывать. тем самым отправлять уведомления с нужным текстом
+        notification = new NotificationCreator((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE));
+        notification.Send(this, "WARNING", "response");
     }
 
     @Override
@@ -204,7 +211,8 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl("javascript:writeNumber('" + number + "')");
 
             APIAgent agent = new APIAgent();
-            agent.put_request(number);
+            String response = agent.put_request(number);
+            notification.Send(MainActivity.this, "WARNING", response);
         }
 
         @Override

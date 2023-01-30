@@ -49,8 +49,12 @@ public class APIAgent {
         thread.start();
     }
 
-    public void put_request(final String number) {
-        Thread thread = new Thread() {
+    public String put_request(final String number) {
+
+        class ActionRequest implements Runnable {
+            private volatile String resp;
+
+            @Override
             public void run() {
                 MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
@@ -66,12 +70,28 @@ public class APIAgent {
                 Request request = new Request.Builder().url(API_URL + API_PUT_ACTION_PATH).put(body).build();
                 try {
                     Response response = client.newCall(request).execute();
-                    Log.d("ACTION", Objects.requireNonNull(response.body()).string());
+                    String responseString = Objects.requireNonNull(response.body()).string();
+                    Log.d("ACTION", responseString);
+                    resp = responseString;
                 } catch (IOException e) {
                     e.printStackTrace();
+                    resp = "Error";
                 }
             }
-        };
+
+            public String getResp() {
+                return resp;
+            }
+        }
+        ActionRequest request = new ActionRequest();
+        Thread thread = new Thread(request);
         thread.start();
+        try {
+            thread.join();
+            return request.getResp();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "ERROR";
     }
 }
