@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -216,11 +217,26 @@ public class MainActivity extends AppCompatActivity {
 
             APIAgent agent = new APIAgent();
             ActionResponse response = agent.put_request(number);
+
             if (response.Status == ActionResponse.STATUS_EXIST_ORGANIZATION) {
-                notification.Send(MainActivity.this, "WARNING", response.Info);
-                setContentView(R.layout.activity_main);
-                View parentLayout = findViewById(android.R.id.content);
-                snackbarManager.Show(parentLayout, response.Info, getResources().getColor(android.R.color.holo_red_light ));
+                Handler handler = new Handler();
+                class MyRunnable implements Runnable {
+                    private final String Info;
+
+                    public MyRunnable(String info) {
+                        Info = info;
+                    }
+
+                    @Override
+                    public void run() {
+                        notification.Send(MainActivity.this, "WARNING", Info);
+                        setContentView(R.layout.activity_main);
+                        View parentLayout = findViewById(android.R.id.content);
+                        snackbarManager.Show(parentLayout, Info, getResources().getColor(android.R.color.holo_red_light ));
+                    }
+                }
+                MyRunnable mRunnable = new MyRunnable(response.Info);
+                handler.postDelayed(mRunnable, 2000);
             }
         }
 
