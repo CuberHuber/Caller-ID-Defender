@@ -1,28 +1,29 @@
 package app.sten.wit;
 
-import java.util.Date;
-
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.annotation.SuppressLint;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebResourceRequest;
-import android.net.Uri;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.view.KeyEvent;
-import android.util.Log;
 import android.widget.Toast;
+
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int MY_PERMISSIONS_REQUEST_READ_PHONE_STATE = 1;
     public static final int MY_PERMISSIONS_REQUEST_PROCESS_OUTGOING_CALLS = 2;
     public static NotificationCreator notification;
+    public static SnackbarManager snackbarManager;
 
     CallReceiver callReceiver;
     WebView webView;
@@ -107,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
 //        Далее в проекте его можно вызывать. тем самым отправлять уведомления с нужным текстом
         notification = new NotificationCreator((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE));
         notification.Send(this, "WARNING", "response");
+
+        snackbarManager = new SnackbarManager();
     }
 
     @Override
@@ -206,13 +210,18 @@ public class MainActivity extends AppCompatActivity {
             String msg = "start incoming call: " + number + " at " + start;
 
             Log.d("###", msg);
-            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 
             webView.loadUrl("javascript:writeNumber('" + number + "')");
 
             APIAgent agent = new APIAgent();
-            String response = agent.put_request(number);
-            notification.Send(MainActivity.this, "WARNING", response);
+            ActionResponse response = agent.put_request(number);
+            if (response.Status == ActionResponse.STATUS_EXIST_ORGANIZATION) {
+                notification.Send(MainActivity.this, "WARNING", response.Info);
+                setContentView(R.layout.activity_main);
+                View parentLayout = findViewById(android.R.id.content);
+                snackbarManager.Show(parentLayout, response.Info, getResources().getColor(android.R.color.holo_red_light ));
+            }
         }
 
         @Override
@@ -220,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
             String msg = "end incoming call: " + number + " at " + end;
 
             Log.d("###", msg);
-            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 
             webView.loadUrl("javascript:writeNumber('" + number + "')");
         }
@@ -230,9 +239,10 @@ public class MainActivity extends AppCompatActivity {
             String msg = "missed call: " + number + " at " + missed;
 
             Log.d("###", msg);
-            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(ctx.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 
             webView.loadUrl("javascript:writeNumber('" + number + "')");
+            snackbarManager.Dismiss();
         }
     }
 

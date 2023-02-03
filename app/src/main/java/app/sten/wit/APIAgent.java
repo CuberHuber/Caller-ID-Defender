@@ -2,6 +2,8 @@ package app.sten.wit;
 
 import android.util.Log;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.Objects;
 
@@ -49,7 +51,7 @@ public class APIAgent {
         thread.start();
     }
 
-    public String put_request(final String number) {
+    public ActionResponse put_request(final String number) {
 
         class ActionRequest implements Runnable {
             private volatile String resp;
@@ -75,7 +77,7 @@ public class APIAgent {
                     resp = responseString;
                 } catch (IOException e) {
                     e.printStackTrace();
-                    resp = "Error";
+                    resp = "null";
                 }
             }
 
@@ -88,10 +90,25 @@ public class APIAgent {
         thread.start();
         try {
             thread.join();
-            return request.getResp();
+            return parseResponseBody(request.getResp());
         } catch (InterruptedException e) {
             e.printStackTrace();
+            return null;
         }
-        return "ERROR";
+    }
+
+    private ActionResponse parseResponseBody(String response) {
+        try {
+            JSONObject json = new JSONObject(response);
+            boolean isService = json.getBoolean("is_service");
+            boolean resp = json.getBoolean("resp");
+
+            if (isService && resp) return new ActionResponse(ActionResponse.STATUS_EXIST_ORGANIZATION, "Доверенная организация");
+            if (isService) return new ActionResponse(ActionResponse.STATUS_EXIST_ORGANIZATION, "Возможный мошенник");
+            return new ActionResponse(ActionResponse.STATUS_UNKNOWN_ORGANIZATION, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ActionResponse(ActionResponse.STATUS_UNKNOWN_ORGANIZATION, "");
+        }
     }
 }
