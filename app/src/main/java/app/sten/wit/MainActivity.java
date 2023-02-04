@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+        startService(new Intent(getApplicationContext(), MyService.class));
         webView.loadUrl(DEMO_URL);
 
         APIAgent agent = new APIAgent();
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        При создании приложения инициализируется класс уведомлений и в него передается текущий системный сервис.
 //        Далее в проекте его можно вызывать. тем самым отправлять уведомления с нужным текстом
-        notification = new NotificationCreatorBuilder().setNotificationManager((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationCreator();
+        //notification = (NotificationCreator) new NotificationBuilder().setNotificationManager((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationCreator();
         notification.Send(this, "WARNING", "response");
     }
 
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl("javascript:writeNumber('" + number + "')");
 
             APIAgent agent = new APIAgent();
-            String response = agent.put_request(number);
+            String response = String.valueOf(agent.put_request(number));
             notification.Send(MainActivity.this, "WARNING", response);
         }
 
