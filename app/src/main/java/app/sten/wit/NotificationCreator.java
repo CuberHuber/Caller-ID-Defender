@@ -1,5 +1,9 @@
 package app.sten.wit;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+import static android.provider.Settings.System.getString;
+import static android.support.v4.content.ContextCompat.getSystemService;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -25,15 +29,17 @@ public class NotificationCreator {
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .setContentTitle(title)
                         .setContentText(text)
-                        .setPriority(Notification.PRIORITY_MAX);
+                        .setPriority(Notification.PRIORITY_MAX)
+                        .setDefaults(Notification.DEFAULT_VIBRATE)
+                        .setVibrate(new long[0]);
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Channel human readable title",
-                    NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    "Channel human readable title", NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(channel);
+
             mBuilder.setChannelId(CHANNEL_ID);
         }
         notificationManager.notify(0, mBuilder.build());
